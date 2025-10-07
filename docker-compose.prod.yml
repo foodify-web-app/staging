@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - user-service
+      - order-service
+      - dish-service
+      - cart-service
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    image: yourusername/user-service:v1.0.0
+    container_name: user-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+    expose:
+      - "4001"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Order Service
+  order-service:
+    image: yourusername/order-service:v1.0.0
+    container_name: order-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+    expose:
+      - "4004"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Dish Service
+  dish-service:
+    image: yourusername/dish-service:v1.0.0
+    container_name: dish-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+    expose:
+      - "4002"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Cart Service
+  cart-service:
+    image: yourusername/cart-service:v1.0.0
+    container_name: cart-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+    expose:
+      - "4003"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
