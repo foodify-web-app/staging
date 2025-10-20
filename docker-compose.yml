@@ -16,6 +16,15 @@ services:
       - microservices-network
     restart: unless-stopped
 
+  redis:
+    image: redis:7
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
   # User Service
   user-service:
     build:
