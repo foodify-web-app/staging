@@ -1,0 +1,147 @@
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - user-service
+      - order-service
+      - dish-service
+      - cart-service
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4
+    container_name: redis-server
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    networks:
+      - microservices-network
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    restart: always
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URI=redis://redis:6379
+    networks:
+      - microservices-network
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+    expose:
+      - "4001"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Order Service
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+    expose:
+      - "4004"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Dish Service
+  dish-service:
+    build:
+      context: ./dish-service
+      dockerfile: Dockerfile
+    container_name: dish-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+    expose:
+      - "4002"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Cart Service
+  cart-service:
+    build:
+      context: ./cart-service
+      dockerfile: Dockerfile
+    container_name: cart-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+    expose:
+      - "4003"
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Optional: MongoDB (if you're using it)
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: mongodb
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=admin
+  #     - MONGO_INITDB_ROOT_PASSWORD=password
+  #   volumes:
+  #     - mongodb-data:/data/db
+  #   networks:
+  #     - microservices-network
+  #   restart: unless-stopped
+
+  # Optional: PostgreSQL (if you're using it)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: postgres-db
+  #   environment:
+  #     - POSTGRES_USER=dbuser
+  #     - POSTGRES_PASSWORD=dbpass
+  #     - POSTGRES_DB=food_ordering_db
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - microservices-network
+  #   restart: unless-stopped
+
+  # Optional: Redis (for caching/sessions)
+  # redis:
+  #   image: redis:alpine
+  #   container_name: redis-cache
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - microservices-network
+  #   restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
+
+# volumes:
+#   mongodb-data:
+#   postgres-data:
